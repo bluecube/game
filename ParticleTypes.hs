@@ -10,7 +10,6 @@ data ParticleType = ParticleType {
 
     -- Display properties
     particleTypeSurface :: SDL.Surface,
-    particleTypeSize :: Int,
 
     -- Physics properties
     -- | Mass used for gravitation
@@ -29,13 +28,14 @@ particleTypeByName name = head (filter ((== name) . particleTypeName) particleTy
 
 particleTypes :: [ParticleType]
 particleTypes = [
-    (newParticleType "t1r" (SDL.Color 255 0 0) 16 2.5 2.5 0.2 10),
-    (newParticleType "t1g" (SDL.Color 0 255 0) 16 2.5 2.5 0.2 10),
-    (newParticleType "t2" (SDL.Color 0 0 255) 32 10 10.0 1 20)
+    (newParticleType "t1r" (SDL.Color 255 0 0) 2.5 2.5 0.2 10),
+    (newParticleType "t1g" (SDL.Color 0 255 0) 2.5 2.5 0.2 10),
+    (newParticleType "t2" (SDL.Color 0 0 255) 10 10.0 1 20)
     ]
 
-makeSurfaceForParticleType :: SDL.Color -> Int -> IO SDL.Surface
-makeSurfaceForParticleType color size = do
+makeSurfaceForParticleType :: SDL.Color -> Float -> IO SDL.Surface
+makeSurfaceForParticleType color d0 = do
+    let size = (round (d0 * 1.5)) :: Int
     surfaceRaw <- SDL.createRGBSurface [SDL.HWSurface, SDL.SrcAlpha] size size 32 0xff000000 0x00ff0000 0x0000ff00 0x000000ff
     surface <- SDL.displayFormatAlpha surfaceRaw
 
@@ -54,8 +54,8 @@ drawParticleTypePixel surface (SDL.Color r g b) size (x, y) = do
     _ <- SDL.fillRect surface (Just (SDL.Rect x y 1 1)) pixel
     return ()
 
-newParticleType :: String -> SDL.Color -> Int -> Float -> Float -> Float -> Float -> ParticleType
-newParticleType name color size = (ParticleType
+newParticleType :: String -> SDL.Color -> Float -> Float -> Float -> Float -> ParticleType
+newParticleType name color mg ma f0 d0 = (ParticleType
     name
-    (unsafePerformIO (makeSurfaceForParticleType color size))
-    size)
+    (unsafePerformIO (makeSurfaceForParticleType color d0))
+    mg ma f0 d0)

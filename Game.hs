@@ -91,10 +91,12 @@ projectToScreen (Vector2D x y) = Vector2D (windowWidth `div` 2 + (truncate x)) (
 
 drawParticle :: SDL.Surface -> Particle -> IO ()
 drawParticle surface p = do
-    let size = particleSize p
+    let sourceSurface = particleSurface p
+    let w = SDL.surfaceGetWidth sourceSurface
+    let h = SDL.surfaceGetHeight sourceSurface
     let Vector2D x y = projectToScreen (particlePosition p)
-    _ <- (SDL.blitSurface (particleSurface p) Nothing
-                          surface (Just (SDL.Rect (x - size `div` 2) (y - size `div` 2) size size)))
+    _ <- (SDL.blitSurface sourceSurface Nothing
+                          surface (Just (SDL.Rect (x - w `div` 2) (y - h `div` 2) 0 0)))
     return ()
 
 drawBox :: SDL.Surface -> ParticleTree -> IO ()

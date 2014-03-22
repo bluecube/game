@@ -16,9 +16,6 @@ data Particle = Particle {
 particleSurface :: Particle -> SDL.Surface
 particleSurface = particleTypeSurface . particleType
 
-particleSize :: Particle -> Int
-particleSize = particleTypeSize . particleType
-
 particleMg :: Particle -> Float
 particleMg = particleTypeMg . particleType
 
