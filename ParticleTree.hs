@@ -2,8 +2,13 @@
 
 module ParticleTree where
 
+import Control.Parallel
+
 import Particles
 import Util
+
+maxUpdateThreads :: Int
+maxUpdateThreads = 8
 
 -- | Bounding volume hierarchy of particles. Strict in all operations (unless I forgot some)
 data ParticleTree = InnerNode !BBoxF !Float !Float !ParticleTree !ParticleTree | LeafNode !Particle deriving Show
@@ -29,6 +34,18 @@ particleTreeMapM_ f g t@(InnerNode _ _ _ t1 t2) = do
     _ <- particleTreeMapM_ f g t2
     _ <- g t
     return ()
+
+particleTreeUpdateAutoPar :: (Particle -> Particle) -> ParticleTree -> ParticleTree
+particleTreeUpdateAutoPar = particleTreeUpdateAutoPar' (truncate (logBase (2::Float) (fromIntegral maxUpdateThreads)))
+
+particleTreeUpdateAutoPar' :: Int -> (Particle -> Particle) -> ParticleTree -> ParticleTree
+particleTreeUpdateAutoPar' 0 f t = particleTreeUpdate f t
+particleTreeUpdateAutoPar' _ f (LeafNode p) = LeafNode (f p)
+particleTreeUpdateAutoPar' level f (InnerNode _ mg maxD0 subtree1 subtree2) = let
+    newSubtree1 = particleTreeUpdateAutoPar' (level - 1) f subtree1
+    newSubtree2 = particleTreeUpdateAutoPar' (level - 1) f subtree2
+    in
+        newSubtree2 `par` (newSubtree1 `pseq` (InnerNode (updateBoundingBox (particleTreeBBox newSubtree1) (particleTreeBBox newSubtree2)) mg maxD0 newSubtree1 newSubtree2))
 
 particleTreeUpdate :: (Particle -> Particle) -> ParticleTree -> ParticleTree
 particleTreeUpdate f (LeafNode p) = LeafNode (f p)

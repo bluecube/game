@@ -14,7 +14,7 @@ maxAngle :: Float
 maxAngle = 5
 
 simulationStep :: ParticleTree -> ParticleTree
-simulationStep particles = particleTreeUpdate (simulateParticle particles) particles
+simulationStep particles = particleTreeUpdateAutoPar (simulateParticle particles) particles
 
 -- | Update a particle by a step of the simulation
 simulateParticle :: ParticleTree -> Particle -> Particle

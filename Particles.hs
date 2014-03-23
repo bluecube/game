@@ -8,9 +8,9 @@ import ParticleTypes
 import Util
 
 data Particle = Particle {
-    particlePosition :: V2F,
-    particleVelocity :: V2F,
-    particleType :: ParticleType
+    particlePosition :: !V2F,
+    particleVelocity :: !V2F,
+    particleType :: !ParticleType
     } deriving Show
 
 particleSurface :: Particle -> SDL.Surface
