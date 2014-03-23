@@ -86,23 +86,27 @@ processEvents surface = do
             processEvents newSurface
         _ -> processEvents surface
 
-projectToScreen :: V2F -> Vector2D Int
-projectToScreen (Vector2D x y) = Vector2D (windowWidth `div` 2 + (truncate x)) (windowHeight `div` 2 + (truncate y))
+projectToScreen :: SDL.Surface -> V2F -> Vector2D Int
+projectToScreen surface (Vector2D x y) = let
+    w = SDL.surfaceGetWidth surface
+    h = SDL.surfaceGetHeight surface
+    in
+    Vector2D (w `div` 2 + (truncate x)) (h `div` 2 + (truncate y))
 
 drawParticle :: SDL.Surface -> Particle -> IO ()
 drawParticle surface p = do
     let sourceSurface = particleSurface p
     let w = SDL.surfaceGetWidth sourceSurface
     let h = SDL.surfaceGetHeight sourceSurface
-    let Vector2D x y = projectToScreen (particlePosition p)
+    let Vector2D x y = projectToScreen surface (particlePosition p)
     _ <- (SDL.blitSurface sourceSurface Nothing
                           surface (Just (SDL.Rect (x - w `div` 2) (y - h `div` 2) 0 0)))
     return ()
 
 drawBox :: SDL.Surface -> ParticleTree -> IO ()
 drawBox surface (InnerNode (BoundingBox v1 v2) _ _ _ _) = do
-    let Vector2D x1 y1 = projectToScreen v1
-    let Vector2D x2 y2 = projectToScreen v2
+    let Vector2D x1 y1 = projectToScreen surface v1
+    let Vector2D x2 y2 = projectToScreen surface v2
 
     _ <- SDL.fillRect surface (Just (SDL.Rect x1 y1 1 (abs (y2 - y1)))) white
     _ <- SDL.fillRect surface (Just (SDL.Rect x1 y1 (abs (x2 - x1)) 1)) white
