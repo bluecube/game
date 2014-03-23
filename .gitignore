@@ -1,4 +1,6 @@
 *.hi
 *.o
 *.sw[op]
+*.hp
+*.prof
 Game
