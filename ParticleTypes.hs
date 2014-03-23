@@ -9,18 +9,18 @@ data ParticleType = ParticleType {
     particleTypeName :: String,
 
     -- Display properties
-    particleTypeSurface :: SDL.Surface,
+    particleTypeSurface :: !SDL.Surface,
 
     -- Physics properties
     -- | Mass used for gravitation
-    particleTypeMg :: Float,
+    particleTypeMg :: !Float,
     -- | Mass used when converting force to acceleration
-    particleTypeMa :: Float,
+    particleTypeMa :: !Float,
     -- | Repulsive force at zero distance
-    particleTypeF0 :: Float,
+    particleTypeF0 :: !Float,
     -- | Distance where the gravitational pull switches to repulsion
     -- | (distance with maximal gravitational pull)
-    particleTypeD0 :: Float
+    particleTypeD0 :: !Float
     } deriving Show
 
 particleTypeByName :: String -> ParticleType
