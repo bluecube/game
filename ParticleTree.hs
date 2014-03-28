@@ -35,24 +35,38 @@ particleTreeMapM_ f g t@(InnerNode _ _ _ t1 t2) = do
     _ <- g t
     return ()
 
-particleTreeUpdateAutoPar :: (Particle -> Particle) -> ParticleTree -> ParticleTree
+particleTreeUpdateAutoPar :: (Particle -> (Particle, Int)) -> ParticleTree -> (ParticleTree, Int)
 particleTreeUpdateAutoPar = particleTreeUpdateAutoPar' (truncate (logBase (2::Float) (fromIntegral maxUpdateThreads)))
 
-particleTreeUpdateAutoPar' :: Int -> (Particle -> Particle) -> ParticleTree -> ParticleTree
+particleTreeUpdateAutoPar' :: Int -> (Particle -> (Particle, Int)) -> ParticleTree -> (ParticleTree, Int)
 particleTreeUpdateAutoPar' 0 f t = particleTreeUpdate f t
-particleTreeUpdateAutoPar' _ f (LeafNode p) = LeafNode (f p)
 particleTreeUpdateAutoPar' level f (InnerNode _ mg maxD0 subtree1 subtree2) = let
-    newSubtree1 = particleTreeUpdateAutoPar' (level - 1) f subtree1
-    newSubtree2 = particleTreeUpdateAutoPar' (level - 1) f subtree2
+    (newSubtree1, count1) = particleTreeUpdateAutoPar' (level - 1) f subtree1
+    (newSubtree2, count2) = particleTreeUpdateAutoPar' (level - 1) f subtree2
     in
-        newSubtree2 `par` (newSubtree1 `pseq` (InnerNode (updateBoundingBox (particleTreeBBox newSubtree1) (particleTreeBBox newSubtree2)) mg maxD0 newSubtree1 newSubtree2))
+        newSubtree2 `par` (newSubtree1 `pseq` (
+            (InnerNode (updateBoundingBox (particleTreeBBox newSubtree1)
+                       (particleTreeBBox newSubtree2))
+                       mg
+                       maxD0
+                       newSubtree1
+                       newSubtree2), count1 + count2))
+particleTreeUpdateAutoPar' _ f t = particleTreeUpdate f t
 
-particleTreeUpdate :: (Particle -> Particle) -> ParticleTree -> ParticleTree
-particleTreeUpdate f (LeafNode p) = LeafNode (f p)
+particleTreeUpdate :: (Particle -> (Particle, Int)) -> ParticleTree -> (ParticleTree, Int)
+particleTreeUpdate f (LeafNode p) = let
+    (newP, count) = f p
+    in
+    ((LeafNode newP), count)
 particleTreeUpdate f (InnerNode _ mg maxD0 subtree1 subtree2) = let
-    newSubtree1 = particleTreeUpdate f subtree1
-    newSubtree2 = particleTreeUpdate f subtree2
-    in InnerNode (updateBoundingBox (particleTreeBBox newSubtree1) (particleTreeBBox newSubtree2)) mg maxD0 newSubtree1 newSubtree2
+    (newSubtree1, count1) = particleTreeUpdate f subtree1
+    (newSubtree2, count2) = particleTreeUpdate f subtree2
+    in ((InnerNode (updateBoundingBox (particleTreeBBox newSubtree1)
+                   (particleTreeBBox newSubtree2))
+                   mg
+                   maxD0
+                   newSubtree1
+                   newSubtree2), count1 + count2)
 
 particleTreeFoldl' :: (a -> Particle -> a) -> a -> ParticleTree -> a
 particleTreeFoldl' f z (LeafNode p) = z `seq` (f z p)
@@ -67,6 +81,9 @@ particleTreeToList tree = particleTreeToListAccum tree []
         particleTreeToListAccum :: ParticleTree -> [Particle] -> [Particle]
         particleTreeToListAccum (LeafNode p) append = (p:append)
         particleTreeToListAccum (InnerNode _ _ _ t1 t2) append = particleTreeToListAccum t1 $ particleTreeToListAccum t2 append
+
+rebuildParticleTree :: ParticleTree -> ParticleTree
+rebuildParticleTree = buildParticleTree . particleTreeToList
 
 type CandidateBox = ([Particle], Int, BBoxF)
 
