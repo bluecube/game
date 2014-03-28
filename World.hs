@@ -27,8 +27,8 @@ updateWorldState (particleTree, baseOpenCount) = let
 
 drawWorld :: SDL.Surface -> WorldState -> IO ()
 drawWorld surface (particles, _) = do
-    particleTreeMapM_ (drawParticle surface) (\_ -> return()) particles
-    --particleTreeMapM_ (drawParticle surface) (drawBox surface) particles
+    --particleTreeMapM_ (drawParticle surface) (\_ -> return()) particles
+    particleTreeMapM_ (drawParticle surface) (drawBox surface) particles
 
 drawParticle :: SDL.Surface -> Particle -> IO ()
 drawParticle surface p = do

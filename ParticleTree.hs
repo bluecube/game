@@ -91,19 +91,26 @@ buildParticleTree :: [Particle] -> ParticleTree
 buildParticleTree [] = error "buildParticleTree empty argument"
 buildParticleTree [p] = LeafNode p
 buildParticleTree ps = let
-    (ps1, ps2, bbox, mg, maxD0) = split ps ([], 0, emptyBoundingBox) ([], 0, emptyBoundingBox) 0 0
+    (ps1, ps2, bbox, mg, maxD0) = split ps
     in InnerNode bbox mg maxD0 (buildParticleTree ps1) (buildParticleTree ps2)
 
 -- | Greedy splitting algorithm for lists of Particles
 -- | Attempts to put each element into one of the candidate boxes,
 -- | comparing weight functions to find out which one to use.
-split :: [Particle] -> CandidateBox -> CandidateBox -> Float -> Float -> ([Particle], [Particle], BBoxF, Float, Float)
-split [] l r mg maxD0 = let
+split :: [Particle] -> ([Particle], [Particle], BBoxF, Float, Float)
+split (p:ps) = let
+    pos1 = particlePosition p
+    pos2 = findFurthest pos1 ps pos1 0
+    in
+    split' ps ([p], 1, (BoundingBox pos1 pos1)) ([], 0, (BoundingBox pos2 pos2)) (particleMg p) (particleD0 p)
+split [] = error "attempting to split empty list"
+split' :: [Particle] -> CandidateBox -> CandidateBox -> Float -> Float -> ([Particle], [Particle], BBoxF, Float, Float)
+split' [] l r mg maxD0 = let
     (lList, _, lBBox) = l
     (rList, _, rBBox) = r
     bbox = updateBoundingBox lBBox rBBox
     in (lList, rList, bbox , mg, maxD0)
-split (p:ps) l r mg maxD0 = let
+split' (p:ps) l r mg maxD0 = let
     (lList, lCount, lBBox) = l
     (rList, rCount, rBBox) = r
 
@@ -117,12 +124,23 @@ split (p:ps) l r mg maxD0 = let
     newMaxD0 = max maxD0 (particleD0 p)
 
     in if lCost < rCost then
-        split ps lUpdated r newMg newMaxD0
+        split' ps lUpdated r newMg newMaxD0
     else
-        split ps l rUpdated newMg newMaxD0
+        split' ps l rUpdated newMg newMaxD0
 
 splitCost :: CandidateBox -> CandidateBox -> Float
 splitCost l r = let
     (_, lCount, lBBox) = l
     (_, rCount, rBBox) = r
     in (fromIntegral (abs lCount - rCount)) + (boundingBoxDiameter lBBox) + (boundingBoxDiameter rBBox)
+
+findFurthest :: V2F -> [Particle] -> V2F -> Float -> V2F
+findFurthest _ [] pos _ = pos
+findFurthest pos1 (p:ps) best bestDistance = let
+    pos2 = particlePosition p
+    distance = absSquared (pos1 |-| pos2)
+    in
+    if distance > bestDistance then
+        findFurthest pos1 ps pos2 distance
+    else
+        findFurthest pos1 ps best bestDistance
