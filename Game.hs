@@ -2,13 +2,14 @@
 {-# OPTIONS -Wall #-}
 
 import qualified Graphics.UI.SDL as SDL
-import Data.Word
+import qualified Graphics.UI.SDL.TTF as TTF
 
 import Particles
 import ParticleTypes
 import ParticleTree
 import Physics
 import Util
+import FpsWatcher
 
 data InputState = QuitGame | InputState
 
@@ -22,6 +23,9 @@ background :: SDL.Pixel
 background = SDL.Pixel 0x000014
 white :: SDL.Pixel
 white = SDL.Pixel 0xcccccc
+
+fontPath :: String
+fontPath = "/usr/share/fonts/dejavu/DejaVuSans.ttf"
 
 initialParticles :: [Particle]
 initialParticles = [
@@ -44,16 +48,22 @@ initialParticles = [
 main :: IO ()
 main = do
     SDL.init [SDL.InitEverything]
+    _ <- TTF.init
+
+    fpsFont <- TTF.openFont fontPath 70
 
     SDL.setCaption "Game" ""
     surface <- SDL.setVideoMode windowWidth windowHeight 24 [SDL.HWSurface, SDL.DoubleBuf]
 
-    gameLoop surface (buildParticleTree initialParticles)
+    fpsWatcher <- initFpsWatcher
+    let particleTree = buildParticleTree initialParticles
+
+    gameLoop surface fpsFont fpsWatcher particleTree
 
     SDL.quit
 
-gameLoop :: SDL.Surface -> ParticleTree -> IO ()
-gameLoop oldSurface oldParticles = do
+gameLoop :: SDL.Surface -> TTF.Font -> FpsWatcherState -> ParticleTree -> IO ()
+gameLoop oldSurface fpsFont oldFpsWatcher oldParticles = do
     timeBefore <- SDL.getTicks
     (surface, inputState) <- processEvents oldSurface
     case inputState of
@@ -62,18 +72,14 @@ gameLoop oldSurface oldParticles = do
             let particles = simulationStep oldParticles
 
             _ <- SDL.fillRect surface Nothing background
+            drawFps fpsFont surface (fpsWatcherFps oldFpsWatcher)
             --particleTreeMapM_ (drawParticle surface) (drawBox surface) particles
             particleTreeMapM_ (drawParticle surface) (\_ -> return()) particles
             SDL.flip surface
 
-            timeAfter <- SDL.getTicks
-            let timePerFrame = (round ((1000.0::Float) / (fromIntegral framerate)))::Word32
-            print (timeAfter - timeBefore)
-            if timeAfter - timeBefore < timePerFrame then
-                SDL.delay (timePerFrame - (timeAfter - timeBefore))
-            else
-                return ()
-            gameLoop surface particles
+            fpsWatcher <- stepFpsWatcher framerate oldFpsWatcher
+
+            gameLoop surface fpsFont fpsWatcher particles
 
 processEvents :: SDL.Surface -> IO (SDL.Surface, InputState)
 processEvents surface = do
@@ -92,6 +98,16 @@ projectToScreen surface (Vector2D x y) = let
     h = SDL.surfaceGetHeight surface
     in
     Vector2D (w `div` 2 + (truncate x)) (h `div` 2 + (truncate y))
+
+drawFps :: TTF.Font -> SDL.Surface -> Integer -> IO()
+drawFps fpsFont surface fps = do
+    let string = (show fps) ++ " fps"
+    let w = SDL.surfaceGetWidth surface
+    rendered <- TTF.renderTextShaded fpsFont string (SDL.Color 0x10 0x10 0x10) (SDL.Color 0x00 0x00 0x14)
+    let renderedW = SDL.surfaceGetWidth rendered
+    _ <- (SDL.blitSurface rendered Nothing
+                          surface (Just (SDL.Rect (w - renderedW) 0 0 0)))
+    return ()
 
 drawParticle :: SDL.Surface -> Particle -> IO ()
 drawParticle surface p = do
