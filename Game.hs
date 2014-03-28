@@ -19,10 +19,10 @@ windowHeight :: Int
 windowHeight = 600
 framerate :: Int
 framerate = 50
-background :: SDL.Pixel
-background = SDL.Pixel 0x000014
-white :: SDL.Pixel
-white = SDL.Pixel 0xcccccc
+background :: SDL.Color
+background = SDL.Color 0x00 0x00 0x14
+white :: SDL.Color
+white = SDL.Color 0xcc 0xcc 0xcc
 
 fontPath :: String
 fontPath = "/usr/share/fonts/dejavu/DejaVuSans.ttf"
@@ -64,14 +64,14 @@ main = do
 
 gameLoop :: SDL.Surface -> TTF.Font -> FpsWatcherState -> ParticleTree -> IO ()
 gameLoop oldSurface fpsFont oldFpsWatcher oldParticles = do
-    timeBefore <- SDL.getTicks
     (surface, inputState) <- processEvents oldSurface
     case inputState of
         QuitGame -> return ()
         InputState -> do
             let particles = simulationStep oldParticles
 
-            _ <- SDL.fillRect surface Nothing background
+            bg <- mapColor surface background
+            _ <- SDL.fillRect surface Nothing bg
             drawFps fpsFont surface (fpsWatcherFps oldFpsWatcher)
             --particleTreeMapM_ (drawParticle surface) (drawBox surface) particles
             particleTreeMapM_ (drawParticle surface) (\_ -> return()) particles
@@ -103,7 +103,8 @@ drawFps :: TTF.Font -> SDL.Surface -> Integer -> IO()
 drawFps fpsFont surface fps = do
     let string = (show fps) ++ " fps"
     let w = SDL.surfaceGetWidth surface
-    rendered <- TTF.renderTextShaded fpsFont string (SDL.Color 0x10 0x10 0x10) (SDL.Color 0x00 0x00 0x14)
+    let color = mixColors 0.1 white background
+    rendered <- TTF.renderTextShaded fpsFont string color background
     let renderedW = SDL.surfaceGetWidth rendered
     _ <- (SDL.blitSurface rendered Nothing
                           surface (Just (SDL.Rect (w - renderedW) 0 0 0)))
@@ -124,10 +125,21 @@ drawBox surface (InnerNode (BoundingBox v1 v2) _ _ _ _) = do
     let Vector2D x1 y1 = projectToScreen surface v1
     let Vector2D x2 y2 = projectToScreen surface v2
 
-    _ <- SDL.fillRect surface (Just (SDL.Rect x1 y1 1 (abs (y2 - y1)))) white
-    _ <- SDL.fillRect surface (Just (SDL.Rect x1 y1 (abs (x2 - x1)) 1)) white
-    _ <- SDL.fillRect surface (Just (SDL.Rect x2 y1 1 (abs (y2 - y1)))) white
-    _ <- SDL.fillRect surface (Just (SDL.Rect x1 y2 (abs (x2 - x1)) 1)) white
+    c <- mapColor surface white
+
+    _ <- SDL.fillRect surface (Just (SDL.Rect x1 y1 1 (abs (y2 - y1)))) c
+    _ <- SDL.fillRect surface (Just (SDL.Rect x1 y1 (abs (x2 - x1)) 1)) c
+    _ <- SDL.fillRect surface (Just (SDL.Rect x2 y1 1 (abs (y2 - y1)))) c
+    _ <- SDL.fillRect surface (Just (SDL.Rect x1 y2 (abs (x2 - x1)) 1)) c
     return ()
 drawBox _ _ = error "blah"
 
+mixColors :: Float -> SDL.Color -> SDL.Color -> SDL.Color
+mixColors ratio (SDL.Color r1 g1 b1) (SDL.Color r2 g2 b2) = let
+    mix a b = round (ratio * (fromIntegral a) + (1 - ratio) * (fromIntegral b))
+    in
+    SDL.Color (mix r1 r2) (mix g1 g2) (mix b1 b2)
+
+mapColor :: SDL.Surface -> SDL.Color -> IO SDL.Pixel
+mapColor surface (SDL.Color r g b) =
+    SDL.mapRGB (SDL.surfaceGetPixelFormat surface) r g b
