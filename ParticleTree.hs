@@ -3,6 +3,7 @@
 module ParticleTree where
 
 import Control.Parallel
+import Debug.Trace
 
 import Particles
 import Util
@@ -98,12 +99,12 @@ buildParticleTree ps = let
 -- | Attempts to put each element into one of the candidate boxes,
 -- | comparing weight functions to find out which one to use.
 split :: [Particle] -> ([Particle], [Particle], BBoxF, Float, Float)
-split (p:ps) = let
-    pos1 = particlePosition p
-    pos2 = findFurthest pos1 ps pos1 0
+split particles = let
+    pos1 = particlePosition (head particles)
+    pos2 = findFurthest pos1 particles pos1 0
+    pos3 = findFurthest pos2 particles pos2 0
     in
-    split' ps ([p], 1, (BoundingBox pos1 pos1)) ([], 0, (BoundingBox pos2 pos2)) (particleMg p) (particleD0 p)
-split [] = error "attempting to split empty list"
+    split' particles ([], 0, (BoundingBox pos2 pos2)) ([], 0, (BoundingBox pos3 pos3)) 0 0
 split' :: [Particle] -> CandidateBox -> CandidateBox -> Float -> Float -> ([Particle], [Particle], BBoxF, Float, Float)
 split' [] l r mg maxD0 = let
     (lList, _, lBBox) = l
@@ -114,16 +115,18 @@ split' (p:ps) l r mg maxD0 = let
     (lList, lCount, lBBox) = l
     (rList, rCount, rBBox) = r
 
-    lUpdated = ((p:lList), lCount + 1, (updateBoundingBoxVector2D lBBox (particlePosition p)))
-    rUpdated = ((p:rList), rCount + 1, (updateBoundingBoxVector2D rBBox (particlePosition p)))
+    pos = particlePosition p
+
+    lUpdated = ((p:lList), lCount + 1, (updateBoundingBoxVector2D lBBox pos))
+    rUpdated = ((p:rList), rCount + 1, (updateBoundingBoxVector2D rBBox pos))
 
     lCost = splitCost lUpdated r
     rCost = splitCost l rUpdated
 
     newMg = mg + (particleMg p)
     newMaxD0 = max maxD0 (particleD0 p)
-
-    in if lCost < rCost then
+    in
+    if lCost < rCost then
         split' ps lUpdated r newMg newMaxD0
     else
         split' ps l rUpdated newMg newMaxD0
@@ -132,7 +135,7 @@ splitCost :: CandidateBox -> CandidateBox -> Float
 splitCost l r = let
     (_, lCount, lBBox) = l
     (_, rCount, rBBox) = r
-    in (fromIntegral (abs lCount - rCount)) + (boundingBoxDiameter lBBox) + (boundingBoxDiameter rBBox)
+    in (fromIntegral (abs (lCount - rCount))) + (boundingBoxDiameter lBBox) + (boundingBoxDiameter rBBox)
 
 findFurthest :: V2F -> [Particle] -> V2F -> Float -> V2F
 findFurthest _ [] pos _ = pos
