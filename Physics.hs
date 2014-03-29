@@ -11,7 +11,7 @@ g :: Float
 g = 2
 -- | Maximum angular size of a box that is not expanded in degrees
 maxAngle :: Float
-maxAngle = 5
+maxAngle = 10
 
 simulationStep :: ParticleTree -> (ParticleTree, Int)
 simulationStep particles = particleTreeUpdateAutoPar (simulateParticle particles) particles
