@@ -3,7 +3,6 @@
 module ParticleTree where
 
 import Control.Parallel
-import Debug.Trace
 
 import Particles
 import Util
@@ -68,6 +67,30 @@ particleTreeUpdate f (InnerNode _ mg maxD0 subtree1 subtree2) = let
                    maxD0
                    newSubtree1
                    newSubtree2), count1 + count2)
+
+particleTreeInsert :: ParticleTree -> Particle -> ParticleTree
+particleTreeInsert (LeafNode p1) p2 = let
+    pos1 = particlePosition p1
+    pos2 = particlePosition p2
+    bbox = BoundingBox (vectorMin pos1 pos2) (vectorMax pos1 pos2)
+    mg = (particleMg p1) + (particleMg p2)
+    maxD0 = max (particleD0 p1) (particleD0 p2)
+    in
+    InnerNode bbox mg maxD0 (LeafNode p1) (LeafNode p2)
+particleTreeInsert (InnerNode bbox mg maxD0 t1 t2) p = let
+    pos = particlePosition p
+    lBox = particleTreeBBox t1
+    rBox = particleTreeBBox t2
+    lSizeInc = (boundingBoxDiameter (updateBoundingBoxVector2D lBox pos)) - (boundingBoxDiameter lBox)
+    rSizeInc = (boundingBoxDiameter (updateBoundingBoxVector2D rBox pos)) - (boundingBoxDiameter rBox)
+    newBBox = updateBoundingBoxVector2D bbox pos
+    newMg = mg + (particleMg p)
+    newMaxD0 = max maxD0 (particleD0 p)
+    in
+    if lSizeInc < rSizeInc then
+        InnerNode newBBox newMg newMaxD0 (particleTreeInsert t1 p) t2
+    else
+        InnerNode newBBox newMg newMaxD0 t1 (particleTreeInsert t2 p)
 
 particleTreeFoldl' :: (a -> Particle -> a) -> a -> ParticleTree -> a
 particleTreeFoldl' f z (LeafNode p) = z `seq` (f z p)
