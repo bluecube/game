@@ -31,16 +31,16 @@ initialParticles :: [Particle]
 initialParticles = [
     (Particle
         (Vector2D (fromIntegral ((i * 43221) `mod` 251) - 200) (fromIntegral ((i * 537) `mod` 251) - 200))
-        (Vector2D 0 1)
+        (Vector2D 0.1 0.5)
         (particleTypeByName "t1r"))
     | i <- [0..200 :: Int]] ++
     [(Particle
         (Vector2D (fromIntegral ((i * 43221) `mod` 251) + 200) (fromIntegral ((i * 537) `mod` 251) + 200))
-        (Vector2D 0 (-2.5))
+        (Vector2D 0.6 (-1.4))
         (particleTypeByName "t1g"))
     | i <- [0..200 :: Int]] ++
     [(Particle
-        (Vector2D (fromIntegral ((i * 43221) `mod` 251) + 200) (fromIntegral ((i * 537) `mod` 251) - 200))
+        (Vector2D (fromIntegral ((i * 43221) `mod` 133) + 200) (fromIntegral ((i * 537) `mod` 101) - 200))
         (Vector2D (-1) (1))
         (particleTypeByName "t2"))
     | i <- [0..50 :: Int]]
