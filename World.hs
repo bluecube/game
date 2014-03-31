@@ -7,6 +7,7 @@ import Debug.Trace
 
 import Particles
 import ParticleTree
+import ParticleTree.Building
 import Physics
 import Util
 
