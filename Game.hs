@@ -6,6 +6,7 @@ import qualified Graphics.UI.SDL.TTF as TTF
 
 import Particles
 import ParticleTypes
+import Util.Geometry
 import Util
 import FpsWatcher
 import World

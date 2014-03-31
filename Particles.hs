@@ -5,7 +5,7 @@ module Particles where
 import qualified Graphics.UI.SDL as SDL
 
 import ParticleTypes
-import Util
+import Util.Geometry
 
 data Particle = Particle {
     particlePosition :: !V2F,

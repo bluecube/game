@@ -9,6 +9,7 @@ import Particles
 import ParticleTree
 import ParticleTree.Building
 import Physics
+import Util.Geometry
 import Util
 
 type WorldState = (ParticleTree, Int)

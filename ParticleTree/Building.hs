@@ -2,7 +2,7 @@ module ParticleTree.Building (buildParticleTree, rebuildParticleTree) where
 
 import ParticleTree
 import Particles
-import Util
+import Util.Geometry
 
 type CandidateBox = ([Particle], Int, BBoxF)
 

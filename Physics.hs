@@ -4,6 +4,7 @@ module Physics (simulationStep) where
 
 import ParticleTree
 import Particles
+import Util.Geometry
 import Util
 
 -- | Gravitational constant

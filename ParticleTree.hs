@@ -5,7 +5,7 @@ module ParticleTree where
 import Control.Parallel
 
 import Particles
-import Util
+import Util.Geometry
 
 maxUpdateThreads :: Int
 maxUpdateThreads = 8
