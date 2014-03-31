@@ -81,9 +81,9 @@ particleTreeInsert (InnerNode bbox mg maxD0 t1 t2) p = let
     pos = particlePosition p
     lBox = particleTreeBBox t1
     rBox = particleTreeBBox t2
-    lSizeInc = (boundingBoxDiameter (updateBoundingBoxVector2D lBox pos)) - (boundingBoxDiameter lBox)
-    rSizeInc = (boundingBoxDiameter (updateBoundingBoxVector2D rBox pos)) - (boundingBoxDiameter rBox)
-    newBBox = updateBoundingBoxVector2D bbox pos
+    lSizeInc = (boundingBoxDiameter (updateBoundingBoxVector lBox pos)) - (boundingBoxDiameter lBox)
+    rSizeInc = (boundingBoxDiameter (updateBoundingBoxVector rBox pos)) - (boundingBoxDiameter rBox)
+    newBBox = updateBoundingBoxVector bbox pos
     newMg = mg + (particleMg p)
     newMaxD0 = max maxD0 (particleD0 p)
     in

@@ -38,8 +38,8 @@ split' (p:ps) l r mg maxD0 = let
 
     pos = particlePosition p
 
-    lUpdated = ((p:lList), lCount + 1, (updateBoundingBoxVector2D lBBox pos))
-    rUpdated = ((p:rList), rCount + 1, (updateBoundingBoxVector2D rBBox pos))
+    lUpdated = ((p:lList), lCount + 1, (updateBoundingBoxVector lBBox pos))
+    rUpdated = ((p:rList), rCount + 1, (updateBoundingBoxVector rBBox pos))
 
     lCost = splitCost lUpdated r
     rCost = splitCost l rUpdated

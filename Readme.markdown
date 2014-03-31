@@ -2,6 +2,11 @@ A beginning of a very simple game to learn Haskell.
 
 ![screenshot](https://github.com/bluecube/game/raw/master/screenshot.png)
 
+Building
+========
+
+    ghc -O2 -XMultiParamTypeClasses -XFunctionalDependencies -XFlexibleInstances -funbox-strict-fields -threaded --make Game.hs
+
 TODO
 ====
 (in no particlular order)
