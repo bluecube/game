@@ -1,5 +1,4 @@
 {-# OPTIONS -Wall #-}
-
 module Util where
 
 import qualified Graphics.UI.SDL as SDL
