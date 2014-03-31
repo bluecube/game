@@ -18,8 +18,8 @@ TODO
   * Changeable friction for low distance interaction
 * Menu
 * Particle tree operations
-  * Rebuilding particle tree
-    * Once number of opened inner nodes increases too much?
+  * Rebuilding particle tree [Done]
+    * Once number of opened inner nodes increases too much? [Done]
     * in background?
-    * Maybe use better heuristic for finding seeds when building
+    * Maybe use better heuristic for finding seeds when building [Partially]
   * Insert and remove particles.
