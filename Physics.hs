@@ -11,7 +11,7 @@ g :: Float
 g = 2
 -- | Maximum angular size of a box that is not expanded in degrees
 maxAngle :: Float
-maxAngle = 10
+maxAngle = 5
 
 simulationStep :: ParticleTree -> (ParticleTree, Int)
 simulationStep particles = particleTreeUpdateAutoPar (simulateParticle particles) particles
@@ -38,15 +38,15 @@ force p1 (LeafNode p2) addForce addCount = addForce `seq` addCount `seq` let
     d0 = (particleD0 p1) + (particleD0 p2)
     in
     if distanceSquared == 0 then
-        (addForce, addCount)
+        (addForce, addCount + 1)
     else if distance < d0 then let
         attractionScalar = distance * (f0 + g * mg / (d0 * d0)) / d0 - f0
         velocityDifference = (particleVelocity p2) |-| (particleVelocity p1)
         frictionScalar = 0.005 * ((velocityDifference `dot` direction) / distance)
         in
-        (addForce |+| (direction |*| ((attractionScalar + frictionScalar) / distance)), addCount)
+        (addForce |+| (direction |*| ((attractionScalar + frictionScalar) / distance)), addCount + 1)
     else
-        (addForce |+| (direction |*| (g * mg / (distance * distanceSquared))), addCount)
+        (addForce |+| (direction |*| (g * mg / (distance * distanceSquared))), addCount+ 1)
 force p (InnerNode bbox treeMg maxD0 t1 t2) addForce addCount = addForce `seq` addCount `seq` let
     direction = (boundingBoxCenter bbox) |-| (particlePosition p)
     distanceSquared = absSquared direction
@@ -59,8 +59,8 @@ force p (InnerNode bbox treeMg maxD0 t1 t2) addForce addCount = addForce `seq` a
         distance = sqrt distanceSquared
         mg = (particleMg p) * treeMg
         in
-        (addForce |+| (direction |*| (g * mg / (distance * distanceSquared))), addCount)
+        (addForce |+| (direction |*| (g * mg / (distance * distanceSquared))), addCount + 1)
     else let
         (newAddForce, newAddCount) = force p t2 addForce addCount
         in
-        force p t1 newAddForce (newAddCount + 1)
+        force p t1 newAddForce newAddCount
